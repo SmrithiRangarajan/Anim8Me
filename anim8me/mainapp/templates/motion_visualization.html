@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Visualization</title>
+</head>
+<body>
+    <h2 style="text-decoration:none"><a href="/home">home</a></h2><br>
+    <h1>Motion Visualization</h1>
+    <h2 style="text-decoration:none"><a href="/webcam_with_pose">capture</a></h2>
+    <div id="motion-container">
+        <canvas id="motion-canvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('motion-canvas');
+        const ctx = canvas.getContext('2d');
+        let frameIndex = 0;
+        let landmarksData = []; 
+    
+        
+        function fetchLandmarksData() {
+            fetch('/api/landmarks/')
+                .then(response => response.json())
+                .then(data => {
+                    landmarksData = data.landmarks;
+                    requestAnimationFrame(renderMotion);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+    
+        
+        function renderMotion() {
+            if (frameIndex < landmarksData.length) {
+                const frameData = landmarksData[frameIndex];
+    
+                // Clear the canvas
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+                
+                frameData.forEach(landmark => {
+                    const x = landmark.x * canvas.width;
+                    const y = landmark.y * canvas.height;
+    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                    ctx.closePath();
+
+                    
+                });
+    
+                frameIndex++;
+    
+                // Request the next frame
+                requestAnimationFrame(renderMotion);
+            } else {
+                
+                frameIndex = 0;
+                
+                fetchLandmarksData();
+            }
+        }
+
+        function fetchLandmarksData() {
+            fetch('/api/landmarks/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    landmarksData = data.landmarks;
+                    requestAnimationFrame(renderMotion);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        
+    
+        // fetching 
+        fetchLandmarksData();
+    </script>
+    
+</body>
+</html>
